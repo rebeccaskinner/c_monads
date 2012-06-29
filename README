@@ -1,0 +1,7 @@
+This project contains some example/test code related to implementing monads in
+C.  This is all about just playing around with ideas for how to better control
+state in C, and isn't intended to be production code.  Memory leaks, unhandled
+corner cases, and undefined behavior likely abound.
+
+For the sake of sanity, GCC extensions are used. The code isn't likely to
+build with any other compilers without refactoring.

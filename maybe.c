@@ -18,7 +18,7 @@ typedef struct maybe maybe_t;
 maybe_t* mk_just(void* val);
 maybe_t* mk_nothing();
 maybe_t* mk_maybe(void* val);
-monad_t* maybe_bind(monad_t* m, monad_t* (*f)(void*));
+monad_t* maybe_bind(monad_t*, monad_t* (*f)(void*));
 monad_t* maybe_return(void* v);
 monad_t* just(void* val);
 monad_t* nothing();
@@ -62,7 +62,7 @@ monad_t* maybe_bind(monad_t* m, monad_t* (*f)(void*))
     if(!m) {
         goto cleanup;
     }
-    maybe_t* maybe = (maybe_t*)(m->value);
+    maybe_t* maybe = (maybe_t*)(m->mvalue);
     if(NOTHING == maybe->type) {
         goto cleanup;
     }
@@ -74,18 +74,18 @@ cleanup:
 monad_t* just(void* val)
 {
     monad_t* monad = malloc(sizeof(monad_t));
-    monad->value = mk_maybe(val);
-    monad->monadic_return = maybe_return;
-    monad->monadic_bind   = maybe_bind;
+    monad->mvalue = mk_maybe(val);
+    monad->mreturn = maybe_return;
+    monad->mbind = (bind_func)maybe_bind;
     return monad;
 }
 
 monad_t* nothing()
 {
     monad_t* monad = malloc(sizeof(monad_t));
-    monad->value = mk_nothing();
-    monad->monadic_return = maybe_return;
-    monad->monadic_bind   = maybe_bind;
+    monad->mvalue = mk_nothing();
+    monad->mreturn = maybe_return;
+    monad->mbind = (bind_func)maybe_bind;
     return monad;
 }
 
@@ -138,11 +138,19 @@ void print_maybe_int_monad(monad_t* m)
         printf("Error: Got a NULL monad\n");
         return;
     }
-    if(!(m->value)) {
+    if(!(m->mvalue)) {
         printf("Error: Monadic value is NULL\n");
         return;
     }
-    print_maybe_int((maybe_t*)(m->value));
+    print_maybe_int((maybe_t*)(m->mvalue));
+}
+
+void* add_numbers(void* aa, void* bb)
+{
+    uintptr_t a = (uintptr_t)aa;
+    uintptr_t b = (uintptr_t)bb;
+    printf("%lu + %lu = %lu\n", a, b, a + b);
+    return NULL;
 }
 
 int main()
@@ -152,18 +160,17 @@ int main()
     int z = 6;
     monad_t* m = just(&x);
     print_maybe_int_monad(m);
-    m = m->monadic_bind(m, (bound_func)increment_evens);
+    m = m->mbind(m, (bound_func)increment_evens);
     print_maybe_int_monad(m);
-    m = m->monadic_bind(m, (bound_func)increment_evens);
+    m = m->mbind(m, (bound_func)increment_evens);
     print_maybe_int_monad(m);
-
     m = just(&y);
-    m = m->monadic_bind(m, (bound_func)increment_evens);
-    m = m->monadic_bind(m, (bound_func)increment_odds);
+    m = m->mbind(m, (bound_func)increment_evens);
+    m = m->mbind(m, (bound_func)increment_odds);
     print_maybe_int_monad(m);
-
     m = just(&z);
-    m = m->monadic_bind(m, (bound_func)increment_odds);
+    m = m->mbind(m, (bound_func)increment_odds);
     print_maybe_int_monad(m);
 
+    return 0;
 }

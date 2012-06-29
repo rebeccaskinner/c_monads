@@ -31,8 +31,16 @@ monad_t* state_return(void* v)
         return tuple;
     }
     st->runstate = (void*)generator_func;
-
     return NULL;
+}
+
+void* state_get(monad_t* m)
+{
+    if(!m) {
+        printf("Error: state_get - no monad!\n");
+        return NULL;
+    }
+    state_t* st = m->mvalue;
 }
 
 tuple_t* roll(seed_t s)
